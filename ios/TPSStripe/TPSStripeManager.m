@@ -8,6 +8,73 @@
 
 #import "TPSStripeManager.h"
 #import <React/RCTUtils.h>
+#import <React/RCTConvert.h>
+
+@implementation RCTConvert (STPBankAccountHolderType)
+
+RCT_ENUM_CONVERTER(STPBankAccountHolderType,
+                   (@{
+                      @"individual": @(STPBankAccountHolderTypeIndividual),
+                      @"company": @(STPBankAccountHolderTypeCompany),
+                      }),
+                   STPBankAccountHolderTypeCompany,
+                   integerValue)
+
++ (NSString *)STPBankAccountHolderTypeString:(STPBankAccountHolderType)type {
+    NSString *string = nil;
+    switch (type) {
+        case STPBankAccountHolderTypeCompany: {
+            string = @"company";
+        }
+            break;
+        case STPBankAccountHolderTypeIndividual:
+        default: {
+            string = @"individual";
+        }
+            break;
+    }
+    return string;
+}
+
+@end
+
+@implementation RCTConvert (STPBankAccountStatus)
+
+RCT_ENUM_CONVERTER(STPBankAccountStatus,
+                   (@{
+                      @"new": @(STPBankAccountStatusNew),
+                      @"validated": @(STPBankAccountStatusValidated),
+                      @"verified": @(STPBankAccountStatusVerified),
+                      @"errored": @(STPBankAccountStatusErrored),
+                      }),
+                   STPBankAccountStatusNew,
+                   integerValue)
+
++ (NSString *)STPBankAccountStatusString:(STPBankAccountStatus)status {
+    NSString *string = nil;
+    switch (status) {
+        case STPBankAccountStatusValidated: {
+            string = @"validated";
+        }
+            break;
+        case STPBankAccountStatusVerified: {
+            string = @"verified";
+        }
+            break;
+        case STPBankAccountStatusErrored: {
+            string = @"errored";
+        }
+            break;
+        case STPBankAccountStatusNew:
+        default: {
+            string = @"new";
+        }
+            break;
+    }
+    return string;
+}
+
+@end
 
 @implementation TPSStripeManager
 {
@@ -103,6 +170,41 @@ RCT_EXPORT_METHOD(createTokenWithCard:(NSDictionary *)params
     }];
 }
 
+RCT_EXPORT_METHOD(createTokenWithBankAccount:(NSDictionary *)params
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    if(!requestIsCompleted) {
+        reject(
+               [NSString stringWithFormat:@"%ld", (long)3],
+               @"Previous request is not completed",
+               [[NSError alloc] initWithDomain:@"StripeNative" code:3 userInfo:@{NSLocalizedDescriptionKey:@"Previous request is not completed"}]
+               );
+        return;
+    }
+    
+    requestIsCompleted = NO;
+    
+    STPBankAccountParams *bankAccount = [[STPBankAccountParams alloc] init];
+    
+    [bankAccount setAccountNumber: params[@"accountNumber"]];
+    [bankAccount setCountry: params[@"country"]];
+    [bankAccount setCurrency: params[@"currency"]];
+    [bankAccount setRoutingNumber: params[@"routingNumber"]];
+    [bankAccount setAccountHolderName: params[@"accountHolderName"]];
+    STPBankAccountHolderType accountHolderType =
+    [RCTConvert STPBankAccountHolderType:params[@"accountHolderType"]];
+    [bankAccount setAccountHolderType: accountHolderType];
+    
+    [[STPAPIClient sharedClient] createTokenWithBankAccount:bankAccount completion:^(STPToken *token, NSError *error) {
+        requestIsCompleted = YES;
+        
+        if (error) {
+            reject(nil, nil, error);
+        } else {
+            resolve([self convertTokenObject:token]);
+        }
+    }];
+}
 
 RCT_EXPORT_METHOD(paymentRequestWithCardForm:(NSDictionary *)options
                                     resolver:(RCTPromiseResolveBlock)resolve
@@ -316,6 +418,23 @@ RCT_EXPORT_METHOD(paymentRequestWithApplePay:(NSArray *)items
     [card setValue:token.card.addressCountry forKey:@"addressCountry"];
     [card setValue:token.card.addressZip forKey:@"addressZip"];
 
+    // Bank Account
+    NSMutableDictionary *bankAccount = [@{} mutableCopy];
+    [result setValue:bankAccount forKey:@"bankAccount"];
+    
+    NSString *bankAccountStatusString =
+    [RCTConvert STPBankAccountStatusString:token.bankAccount.status];
+    [bankAccount setValue:bankAccountStatusString forKey:@"status"];
+    [bankAccount setValue:token.bankAccount.country forKey:@"country"];
+    [bankAccount setValue:token.bankAccount.currency forKey:@"currency"];
+    [bankAccount setValue:token.bankAccount.bankAccountId forKey:@"bankAccountId"];
+    [bankAccount setValue:token.bankAccount.bankName forKey:@"bankName"];
+    [bankAccount setValue:token.bankAccount.last4 forKey:@"last4"];
+    [bankAccount setValue:token.bankAccount.accountHolderName forKey:@"accountHolderName"];
+    NSString *bankAccountHolderTypeString =
+    [RCTConvert STPBankAccountHolderTypeString:token.bankAccount.accountHolderType];
+    [bankAccount setValue:bankAccountHolderTypeString forKey:@"accountHolderType"];
+    
     return result;
 }
 

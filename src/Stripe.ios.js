@@ -25,6 +25,9 @@ class Stripe {
   createTokenWithCard = (params = {}) => (
     TPSStripeManager.createTokenWithCard(params)
   )
+  createTokenWithBankAccount = (params = {}) => (
+    TPSStripeManager.createTokenWithBankAccount(params)
+  )
 }
 
 export default new Stripe()
