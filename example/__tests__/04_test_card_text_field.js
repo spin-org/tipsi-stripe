@@ -1,7 +1,7 @@
 import test from 'tape-async'
 import helper from 'tipsi-appium-helper'
 
-const { driver, select, idFromXPath, idFromAccessId } = helper
+const { driver, select, idFromXPath, idFromAccessId, platform } = helper
 
 test('Test if user can use PaymentCardTextField component', async(t) => {
   const cardTextFieldTabId = select({
@@ -12,6 +12,14 @@ test('Test if user can use PaymentCardTextField component', async(t) => {
   const fieldsId = select({
     ios: idFromXPath('//*/XCUIElementTypeOther[1]/XCUIElementTypeOther[1]/XCUIElementTypeOther[2]/XCUIElementTypeStaticText'),
     android: idFromAccessId('cardField'),
+  })
+  const baseViewId = select({
+    ios: idFromXPath(`
+      //XCUIElementTypeApplication[1]/XCUIElementTypeWindow[1]/XCUIElementTypeOther[1]/
+      XCUIElementTypeOther[1]/XCUIElementTypeOther[1]/XCUIElementTypeOther[1]/
+      XCUIElementTypeOther[1]/XCUIElementTypeOther[2]/XCUIElementTypeOther[1]/
+      XCUIElementTypeOther[2]/XCUIElementTypeOther[1]/XCUIElementTypeOther[4]
+    `),
   })
 
   try {
@@ -37,6 +45,12 @@ test('Test if user can use PaymentCardTextField component', async(t) => {
     t.equal(month, 'Month: 12', 'Month should be 12')
     t.equal(year, 'Year: 34', 'Year should be 34')
     t.equal(cvc, 'CVC: 123', 'CVC should be 123')
+
+    // Hide keyboard
+    if (platform('ios')) {
+      await driver.click(baseViewId)
+      await driver.pause(5000)
+    }
   } catch (error) {
     await helper.screenshot()
     await helper.source()
