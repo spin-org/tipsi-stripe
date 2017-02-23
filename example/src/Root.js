@@ -7,6 +7,7 @@ import AndroidPayScreen from './AndroidPayScreen'
 import CardFormScreen from './CardFormScreen'
 import CustomCardScreen from './CustomCardScreen'
 import CardTextFieldScreen from './CardTextFieldScreen'
+import CustomBankAccountScreen from './CustomBankAccountScreen'
 
 stripe.init({
   publishableKey: '<PUBLISHABLE_KEY>',
@@ -21,6 +22,7 @@ export default class Root extends Component {
       { key: '2', title: 'Card Form' },
       { key: '3', title: 'Custom Card' },
       { key: '4', title: 'Card Text Field' },
+      { key: '5', title: 'Bank Account' },
     ],
   };
 
@@ -60,6 +62,8 @@ export default class Root extends Component {
       return <CustomCardScreen />
     case '4':
       return <CardTextFieldScreen />
+    case '5':
+      return <CustomBankAccountScreen />
     default:
       return null
     }
