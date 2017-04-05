@@ -3,6 +3,13 @@ matrix:
     - os: osx
       language: objective-c
       osx_image: xcode8
+      env:
+        - PLATFORM_VERSION=10.0
+    - os: osx
+      language: objective-c
+      osx_image: xcode7.3
+      env:
+        - PLATFORM_VERSION=8.4
     - os: linux
       language: android
       jdk: oraclejdk8
