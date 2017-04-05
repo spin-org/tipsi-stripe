@@ -544,11 +544,11 @@ RCT_EXPORT_METHOD(openApplePaySetup) {
         NSMutableDictionary *mutableMap = [@{} mutableCopy];
         
         if ((&PKPaymentNetworkAmex) != NULL) {
-            mutableMap[@"amex"] = PKPaymentNetworkAmex;
+            mutableMap[@"american_express"] = PKPaymentNetworkAmex;
         }
         
         if ((&PKPaymentNetworkMasterCard) != NULL) {
-            mutableMap[@"masterCard"] = PKPaymentNetworkMasterCard;
+            mutableMap[@"master_card"] = PKPaymentNetworkMasterCard;
         }
         
         if ((&PKPaymentNetworkVisa) != NULL) {
