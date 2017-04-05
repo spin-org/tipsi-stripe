@@ -42,8 +42,16 @@ RCT_EXPORT_METHOD(init:(NSDictionary *)options) {
 }
 
 RCT_EXPORT_METHOD(deviceSupportsApplePay:(RCTPromiseResolveBlock)resolve
-                                rejecter:(RCTPromiseRejectBlock)reject) {
-    resolve(@([Stripe deviceSupportsApplePay]));
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    resolve(@([PKPaymentAuthorizationViewController canMakePayments]));
+}
+
+RCT_EXPORT_METHOD(canMakeApplePayPaymentsWithOptions:(NSDictionary *)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSArray <NSString *> *networkStrings = options[@"networks"];
+    NSArray <PKPaymentNetwork> *networks = [self paymentNetworks:networkStrings];
+    resolve(@([PKPaymentAuthorizationViewController canMakePaymentsUsingNetworks:networks]));
 }
 
 RCT_EXPORT_METHOD(completeApplePayRequest:(RCTPromiseResolveBlock)resolve
@@ -477,6 +485,47 @@ RCT_EXPORT_METHOD(paymentRequestWithApplePay:(NSArray *)items
         return UIModalPresentationFormSheet;
 
     return UIModalPresentationFullScreen;
+}
+
+- (NSArray <PKPaymentNetwork> *)paymentNetworks:(NSArray <NSString *> *)networkStrings {
+    NSMutableArray <PKPaymentNetwork> *results = [@[] mutableCopy];
+    
+    for (NSString *networkString in networkStrings) {
+        PKPaymentNetwork paymentNetwork = [self paymentNetwork:networkString];
+        if (paymentNetwork) {
+            [results addObject:paymentNetwork];
+        }
+    }
+    
+    return [results copy];
+}
+
+- (PKPaymentNetwork)paymentNetwork:(NSString *)networkString {
+    static NSDictionary *paymentNetworkMap;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableDictionary *mutableMap = [@{} mutableCopy];
+        
+        if ((&PKPaymentNetworkAmex) != NULL) {
+            mutableMap[@"amex"] = PKPaymentNetworkAmex;
+        }
+        
+        if ((&PKPaymentNetworkMasterCard) != NULL) {
+            mutableMap[@"masterCard"] = PKPaymentNetworkMasterCard;
+        }
+        
+        if ((&PKPaymentNetworkVisa) != NULL) {
+            mutableMap[@"visa"] = PKPaymentNetworkVisa;
+        }
+        
+        if ((&PKPaymentNetworkDiscover) != NULL) {
+            mutableMap[@"discover"] = PKPaymentNetworkDiscover;
+        }
+        
+        paymentNetworkMap = [mutableMap copy];
+    });
+    
+    return paymentNetworkMap[networkString];
 }
 
 - (NSNumberFormatter *)numberFormatter {
