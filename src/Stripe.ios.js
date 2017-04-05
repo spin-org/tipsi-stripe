@@ -10,6 +10,9 @@ class Stripe {
   deviceSupportsApplePay = () => (
     TPSStripeManager.deviceSupportsApplePay()
   )
+  canMakeApplePayPaymentsWithOptions = (options = {}) => (
+    TPSStripeManager.canMakeApplePayPaymentsWithOptions(options)
+  )
   paymentRequestWithApplePay = (items = [], options = {}) => (
     TPSStripeManager.paymentRequestWithApplePay(items, options)
   )
