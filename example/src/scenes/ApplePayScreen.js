@@ -12,14 +12,36 @@ export default class ApplePayScreen extends Component {
     complete: true,
     status: null,
     token: null,
+    amexAvailable: false,
+    discoverAvailable: false,
+    masterCardAvailable: false,
+    visaAvailable: false,
   }
 
   async componentWillMount() {
     const allowed = await stripe.deviceSupportsApplePay()
-    this.setState({ allowed })
+    const amexAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['american_express'],
+    })
+    const discoverAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['discover'],
+    })
+    const masterCardAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['master_card'],
+    })
+    const visaAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['visa'],
+    })
+    this.setState({
+      allowed,
+      amexAvailable,
+      discoverAvailable,
+      masterCardAvailable,
+      visaAvailable,
+    })
   }
 
-  handleCompleteChange = (complete) => (
+  handleCompleteChange = complete => (
     this.setState({ complete })
   )
 
@@ -56,11 +78,11 @@ export default class ApplePayScreen extends Component {
       if (this.state.complete) {
         await stripe.completeApplePayRequest()
         console.log('Apple Pay payment completed')
-        this.setState({ status: 'Apple Pay payment completed'})
+        this.setState({ status: 'Apple Pay payment completed' })
       } else {
         await stripe.cancelApplePayRequest()
         console.log('Apple Pay payment cenceled')
-        this.setState({ status: 'Apple Pay payment cenceled'})
+        this.setState({ status: 'Apple Pay payment cenceled' })
       }
     } catch (error) {
       console.log('Error:', error)
@@ -69,7 +91,17 @@ export default class ApplePayScreen extends Component {
   }
 
   render() {
-    const { loading, allowed, complete, status, token } = this.state
+    const {
+      loading,
+      allowed,
+      complete,
+      status,
+      token,
+      amexAvailable,
+      discoverAvailable,
+      masterCardAvailable,
+      visaAvailable,
+    } = this.state
 
     return (
       <View style={styles.container}>
@@ -96,7 +128,7 @@ export default class ApplePayScreen extends Component {
           onValueChange={this.handleCompleteChange}
           {...testID('applePaySwitch')}
         />
-        <View style={styles.token}>
+        <View>
           {token &&
             <Text
               style={styles.instruction}
@@ -111,6 +143,33 @@ export default class ApplePayScreen extends Component {
               {status}
             </Text>
           }
+        </View>
+        <View style={styles.statusContainer}>
+          <Text
+            style={styles.status}
+            {...testID('deviceSupportsApplePayStatus')}>
+            Device {allowed ? 'supports' : 'doesn\'t support' } Pay
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('americanExpressAvailabilityStatus')}>
+            American Express is {amexAvailable ? 'available' : 'not available'}
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('discoverAvailabilityStatus')}>
+            Discover is {discoverAvailable ? 'available' : 'not available'}
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('masterCardAvailabilityStatus')}>
+            Master Card is {masterCardAvailable ? 'available' : 'not available'}
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('visaAvailabilityStatus')}>
+            Visa is {visaAvailable ? 'available' : 'not available'}
+          </Text>
         </View>
       </View>
     )
@@ -137,7 +196,12 @@ const styles = StyleSheet.create({
   switch: {
     marginBottom: 10,
   },
-  token: {
-    height: 20,
+  statusContainer: {
+    margin: 20,
+    alignSelf: 'stretch',
+  },
+  status: {
+    fontWeight: '300',
+    color: 'gray',
   },
 })
