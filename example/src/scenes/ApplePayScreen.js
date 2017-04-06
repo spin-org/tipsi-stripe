@@ -21,16 +21,16 @@ export default class ApplePayScreen extends Component {
   async componentWillMount() {
     const allowed = await stripe.deviceSupportsApplePay()
     const amexAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
-      network: ['american_express'],
+      networks: ['american_express'],
     })
     const discoverAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
-      network: ['discover'],
+      networks: ['discover'],
     })
     const masterCardAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
-      network: ['master_card'],
+      networks: ['master_card'],
     })
     const visaAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
-      network: ['visa'],
+      networks: ['visa'],
     })
     this.setState({
       allowed,
