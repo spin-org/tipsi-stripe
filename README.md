@@ -172,7 +172,25 @@ An object with the following keys:
 
 #### `deviceSupportsApplePay() -> Promise`
 
-Indicates whether or not the device supports Apple Pay. Returns a `Boolean` value.
+Returns whether the user can make Apple Pay payments.
+User may not be able to make payments for a variety of reasons. For example, this functionality may not be supported by their hardware, or it may be restricted by parental controls.
+Returns `YES` if the device supports making payments; otherwise, `NO`.
+
+_NOTE_: iOS Simulator always return `YES`
+
+#### `canMakeApplePayPaymentsWithOptions([options]) -> Promise`
+
+Returns whether the user can make Apple Pay payments with specified options.
+If there are no configured payment cards, this method always returns `NO`.
+Return `YES` if the user can make Apple Pay payments through any of the specified networks; otherwise, `NO`.
+
+_NOTE_: iOS Simulator always return `YES`
+
+##### `options`
+
+An object with the following keys:
+
+* `networks` _[String]_ (Array of String) - Indicates whether the user can make Apple Pay payments through the specified network. Available networks: `american_express`|`discover`|`master_card`|`visa`. If option does not specify we pass all available networks under the hood.
 
 #### `paymentRequestWithApplePay(items, [options]) -> Promise`
 
