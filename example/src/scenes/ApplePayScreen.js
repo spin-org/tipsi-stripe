@@ -1,27 +1,47 @@
-import React, { PureComponent } from 'react'
+import React, { Component } from 'react'
 import { View, Text, Switch, StyleSheet } from 'react-native'
 import stripe from 'tipsi-stripe'
 import Button from '../components/Button'
 import testID from '../utils/testID'
 
 /* eslint-disable no-console */
-export default class ApplePayScreen extends PureComponent {
-  static title = 'Pay'
-
+export default class ApplePayScreen extends Component {
   state = {
     loading: false,
     allowed: false,
     complete: true,
     status: null,
     token: null,
+    amexAvailable: false,
+    discoverAvailable: false,
+    masterCardAvailable: false,
+    visaAvailable: false,
   }
 
   async componentWillMount() {
     const allowed = await stripe.deviceSupportsApplePay()
-    this.setState({ allowed })
+    const amexAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['american_express'],
+    })
+    const discoverAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['discover'],
+    })
+    const masterCardAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['master_card'],
+    })
+    const visaAvailable = await stripe.canMakeApplePayPaymentsWithOptions({
+      network: ['visa'],
+    })
+    this.setState({
+      allowed,
+      amexAvailable,
+      discoverAvailable,
+      masterCardAvailable,
+      visaAvailable,
+    })
   }
 
-  handleCompleteChange = (complete) => (
+  handleCompleteChange = complete => (
     this.setState({ complete })
   )
 
@@ -58,11 +78,11 @@ export default class ApplePayScreen extends PureComponent {
       if (this.state.complete) {
         await stripe.completeApplePayRequest()
         console.log('Apple Pay payment completed')
-        this.setState({ status: 'Apple Pay payment completed'})
+        this.setState({ status: 'Apple Pay payment completed' })
       } else {
         await stripe.cancelApplePayRequest()
         console.log('Apple Pay payment cenceled')
-        this.setState({ status: 'Apple Pay payment cenceled'})
+        this.setState({ status: 'Apple Pay payment cenceled' })
       }
     } catch (error) {
       console.log('Error:', error)
@@ -70,12 +90,18 @@ export default class ApplePayScreen extends PureComponent {
     }
   }
 
-  handleSetupApplePayPress = () => (
-    stripe.openApplePaySetup()
-  )
-
   render() {
-    const { loading, allowed, complete, status, token } = this.state
+    const {
+      loading,
+      allowed,
+      complete,
+      status,
+      token,
+      amexAvailable,
+      discoverAvailable,
+      masterCardAvailable,
+      visaAvailable,
+    } = this.state
 
     return (
       <View style={styles.container}>
@@ -118,16 +144,31 @@ export default class ApplePayScreen extends PureComponent {
             </Text>
           }
         </View>
-        <View style={styles.hintContainer}>
-          <Button
-            text="Setup Pay"
-            disabledText="Not supported"
-            disabled={!allowed}
-            onPress={this.handleSetupApplePayPress}
-            {...testID('setupApplePayButton')}
-          />
-          <Text style={styles.hint}>
-            ('Setup Pay' works only on real device)
+        <View style={styles.statusContainer}>
+          <Text
+            style={styles.status}
+            {...testID('deviceSupportsApplePayStatus')}>
+            Device {allowed ? 'supports' : 'doesn\'t support' } Pay
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('americanExpressAvailabilityStatus')}>
+            American Express is {amexAvailable ? 'available' : 'not available'}
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('discoverAvailabilityStatus')}>
+            Discover is {discoverAvailable ? 'available' : 'not available'}
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('masterCardAvailabilityStatus')}>
+            Master Card is {masterCardAvailable ? 'available' : 'not available'}
+          </Text>
+          <Text
+            style={styles.status}
+            {...testID('visaAvailabilityStatus')}>
+            Visa is {visaAvailable ? 'available' : 'not available'}
           </Text>
         </View>
       </View>
@@ -140,6 +181,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F5FCFF',
   },
   header: {
     fontSize: 20,
@@ -154,12 +196,12 @@ const styles = StyleSheet.create({
   switch: {
     marginBottom: 10,
   },
-  hintContainer: {
-    marginTop: 10,
+  statusContainer: {
+    margin: 20,
+    alignSelf: 'stretch',
   },
-  hint: {
-    fontSize: 12,
-    textAlign: 'center',
+  status: {
+    fontWeight: '300',
     color: 'gray',
   },
 })
