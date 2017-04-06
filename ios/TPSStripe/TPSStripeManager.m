@@ -9,6 +9,11 @@
 #import "TPSStripeManager.h"
 #import <React/RCTUtils.h>
 
+NSString * const TPSPaymentNetworkAmex = @"american_express";
+NSString * const TPSPaymentNetworkDiscover = @"discover";
+NSString * const TPSPaymentNetworkMasterCard = @"master_card";
+NSString * const TPSPaymentNetworkVisa = @"visa";
+
 @implementation TPSStripeManager
 {
     NSString *publishableKey;
@@ -49,8 +54,10 @@ RCT_EXPORT_METHOD(deviceSupportsApplePay:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(canMakeApplePayPaymentsWithOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
-    NSArray <NSString *> *networkStrings = options[@"networks"];
-    NSArray <PKPaymentNetwork> *networks = [self paymentNetworks:networkStrings];
+    NSArray <NSString *> *paymentNetworksStrings =
+    options[@"networks"] ?: [TPSStripeManager supportedPaymentNetworksStrings];
+    
+    NSArray <PKPaymentNetwork> *networks = [self paymentNetworks:paymentNetworksStrings];
     resolve(@([PKPaymentAuthorizationViewController canMakePaymentsUsingNetworks:networks]));
 }
 
@@ -524,11 +531,20 @@ RCT_EXPORT_METHOD(openApplePaySetup) {
     return UIModalPresentationFullScreen;
 }
 
-- (NSArray <PKPaymentNetwork> *)paymentNetworks:(NSArray <NSString *> *)networkStrings {
++ (NSArray <NSString *> *)supportedPaymentNetworksStrings {
+    return @[
+             TPSPaymentNetworkAmex,
+             TPSPaymentNetworkDiscover,
+             TPSPaymentNetworkMasterCard,
+             TPSPaymentNetworkVisa,
+             ];
+}
+
+- (NSArray <PKPaymentNetwork> *)paymentNetworks:(NSArray <NSString *> *)paymentNetworkStrings {
     NSMutableArray <PKPaymentNetwork> *results = [@[] mutableCopy];
     
-    for (NSString *networkString in networkStrings) {
-        PKPaymentNetwork paymentNetwork = [self paymentNetwork:networkString];
+    for (NSString *paymentNetworkString in paymentNetworkStrings) {
+        PKPaymentNetwork paymentNetwork = [self paymentNetwork:paymentNetworkString];
         if (paymentNetwork) {
             [results addObject:paymentNetwork];
         }
@@ -537,32 +553,32 @@ RCT_EXPORT_METHOD(openApplePaySetup) {
     return [results copy];
 }
 
-- (PKPaymentNetwork)paymentNetwork:(NSString *)networkString {
-    static NSDictionary *paymentNetworkMap;
+- (PKPaymentNetwork)paymentNetwork:(NSString *)paymentNetworkString {
+    static NSDictionary *paymentNetworksMap;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSMutableDictionary *mutableMap = [@{} mutableCopy];
         
         if ((&PKPaymentNetworkAmex) != NULL) {
-            mutableMap[@"american_express"] = PKPaymentNetworkAmex;
-        }
-        
-        if ((&PKPaymentNetworkMasterCard) != NULL) {
-            mutableMap[@"master_card"] = PKPaymentNetworkMasterCard;
-        }
-        
-        if ((&PKPaymentNetworkVisa) != NULL) {
-            mutableMap[@"visa"] = PKPaymentNetworkVisa;
+            mutableMap[TPSPaymentNetworkAmex] = PKPaymentNetworkAmex;
         }
         
         if ((&PKPaymentNetworkDiscover) != NULL) {
-            mutableMap[@"discover"] = PKPaymentNetworkDiscover;
+            mutableMap[TPSPaymentNetworkDiscover] = PKPaymentNetworkDiscover;
         }
         
-        paymentNetworkMap = [mutableMap copy];
+        if ((&PKPaymentNetworkMasterCard) != NULL) {
+            mutableMap[TPSPaymentNetworkMasterCard] = PKPaymentNetworkMasterCard;
+        }
+        
+        if ((&PKPaymentNetworkVisa) != NULL) {
+            mutableMap[TPSPaymentNetworkVisa] = PKPaymentNetworkVisa;
+        }
+        
+        paymentNetworksMap = [mutableMap copy];
     });
     
-    return paymentNetworkMap[networkString];
+    return paymentNetworksMap[paymentNetworkString];
 }
 
 - (NSNumberFormatter *)numberFormatter {
