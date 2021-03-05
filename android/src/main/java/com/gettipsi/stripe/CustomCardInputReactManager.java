@@ -5,8 +5,8 @@ import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Xml;
-import android.widget.EditText;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import com.devmarvel.creditcardentry.library.CreditCardForm;
 import com.facebook.react.bridge.Arguments;
@@ -30,6 +30,7 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
   private static final String EXP_MONTH = "expMonth";
   private static final String EXP_YEAR = "expYear";
   private static final String CCV = "cvc";
+  private static final String ZIPCODE = "addressZip";
 
   private ThemedReactContext reactContext;
   private WritableMap currentParams;
@@ -38,6 +39,7 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
   private int currentMonth;
   private int currentYear;
   private String currentCCV;
+  private String currentZipcode;
 
   @Override
   public String getName() {
@@ -76,7 +78,7 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
 
   @ReactProp(name = "backgroundColor")
   public void setBackgroundColor(CreditCardForm view, int color) {
-    Log.d("TAG", "setBackgroundColor: "+color);
+    Log.d("TAG", "setBackgroundColor: " + color);
     view.setBackgroundColor(color);
   }
 
@@ -95,6 +97,11 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
     view.setSecurityCode(securityCode, true);
   }
 
+  @ReactProp(name = "zipcode")
+  public void setZipCode(CreditCardForm view, String securityCode) {
+    view.setZipCode(securityCode, true);
+  }
+
   @ReactProp(name = "numberPlaceholder")
   public void setCreditCardTextHint(CreditCardForm view, String creditCardTextHint) {
     view.setCreditCardTextHint(creditCardTextHint);
@@ -110,12 +117,18 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
     view.setSecurityCodeTextHint(securityCodeTextHint);
   }
 
+  @ReactProp(name = "zipPlaceholder")
+  public void setZipcode(CreditCardForm view, String zipCodeTextHint) {
+    view.setZipCodeTextHint(zipCodeTextHint);
+  }
 
-  private void setListeners(final CreditCardForm view){
+
+  private void setListeners(final CreditCardForm view) {
 
     final EditText ccNumberEdit = (EditText) view.findViewById(R.id.cc_card);
     final EditText ccExpEdit = (EditText) view.findViewById(R.id.cc_exp);
     final EditText ccCcvEdit = (EditText) view.findViewById(R.id.cc_ccv);
+    final EditText ccZipcode = (EditText) view.findViewById(R.id.cc_zip);
 
     ccNumberEdit.addTextChangedListener(new TextWatcher() {
       @Override
@@ -124,7 +137,7 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
 
       @Override
       public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-        Log.d(TAG, "onTextChanged: cardNumber = "+charSequence);
+        Log.d(TAG, "onTextChanged: cardNumber = " + charSequence);
         currentNumber = charSequence.toString().replaceAll(" ", "");
         postEvent(view);
       }
@@ -141,16 +154,16 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
 
       @Override
       public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-        Log.d(TAG, "onTextChanged: EXP_YEAR = "+charSequence);
+        Log.d(TAG, "onTextChanged: EXP_YEAR = " + charSequence);
         try {
           currentMonth = view.getCreditCard().getExpMonth();
-        }catch (Exception e){
+        } catch (Exception e) {
           if (charSequence.length() == 0)
             currentMonth = 0;
         }
         try {
           currentYear = view.getCreditCard().getExpYear();
-        }catch (Exception e){
+        } catch (Exception e) {
           currentYear = 0;
         }
         postEvent(view);
@@ -168,7 +181,7 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
 
       @Override
       public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-        Log.d(TAG, "onTextChanged: CCV = "+charSequence);
+        Log.d(TAG, "onTextChanged: CCV = " + charSequence);
         currentCCV = charSequence.toString();
         postEvent(view);
       }
@@ -177,20 +190,40 @@ public class CustomCardInputReactManager extends SimpleViewManager<CreditCardFor
       public void afterTextChanged(Editable editable) {
       }
     });
+
+    ccZipcode.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {
+
+      }
+
+      @Override
+      public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+        Log.d(TAG, "onTextChanged: Zipcode = " + charSequence);
+        currentZipcode = charSequence.toString();
+        postEvent(view);
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+
+      }
+    });
   }
 
-  private void postEvent(CreditCardForm view){
+  private void postEvent(CreditCardForm view) {
     currentParams = Arguments.createMap();
     currentParams.putString(NUMBER, currentNumber);
     currentParams.putInt(EXP_MONTH, currentMonth);
     currentParams.putInt(EXP_YEAR, currentYear);
     currentParams.putString(CCV, currentCCV);
+    currentParams.putString(ZIPCODE, currentZipcode);
     reactContext.getNativeModule(UIManagerModule.class)
       .getEventDispatcher().dispatchEvent(
       new CreditCardFormOnChangeEvent(view.getId(), currentParams, view.isCreditCardValid()));
   }
 
-  private void updateView(CreditCardForm view){
+  private void updateView(CreditCardForm view) {
 
   }
 }

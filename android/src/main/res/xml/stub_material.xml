@@ -11,7 +11,7 @@
     android:layout_marginRight="@dimen/activity_horizontal_margin"
     android:paddingTop="8dp"
     app:include_helper="true"
-    app:include_zip="false"
+    app:include_zip="true"
     app:input_background="@color/transparent_background"
     app:cursor_color="@color/colorAccent"
     app:text_size="18sp" />
